@@ -212,8 +212,8 @@
 }
 
 .duel-rect {
-  width: 36px;
-  height: 90px;
+  width: 22px;
+  height: 96px;
   background: var(--color-target-bg);
   border: 2px solid var(--color-target-border);
   border-radius: var(--radius-xs);
@@ -226,12 +226,12 @@
 
 .duel-target[data-state="face"] .duel-rect {
   width: 90px;
-  height: 36px;
+  height: 90px;
   border-radius: var(--radius-sm);
 }
 
 .duel-circle {
-  width: 60%;
+  width: 72%;
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--color-target-bull);
@@ -308,6 +308,59 @@
   gap: var(--sp-1);
   justify-content: center;
   margin-top: var(--sp-1);
+}
+
+/* ─── Loop Delay Input ─────────────────────────────────────────── */
+.loop-delay-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.loop-delay-label {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  flex: 1;
+  text-align: right;
+}
+
+.loop-delay-input {
+  width: 60px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  -moz-appearance: textfield;
+}
+
+.loop-delay-input::-webkit-inner-spin-button,
+.loop-delay-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.loop-delay-input:focus {
+  outline: none;
+  border-color: var(--color-blue);
+}
+
+.loop-delay-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.loop-delay-unit {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  flex: 1;
 }
 
 .toggle-btn {

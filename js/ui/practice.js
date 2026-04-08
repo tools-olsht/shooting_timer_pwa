@@ -1,6 +1,6 @@
 import { DISCIPLINES, getMode, getDiscipline, buildEventSequence } from '../disciplines.js';
 import { TimerEngine } from '../timer-engine.js';
-import { playAttentionRapid, playAttentionSlow, playShootSignal, playShotSound, playRestSignal } from '../audio.js';
+import { playAttentionRapid, playAttentionSlow, playShootSignal, playShotSound, playRestSignal, playSeriesEndSignal } from '../audio.js';
 import {
   createNavBar, createSignalBanner, setSignalState, createTargetRow, activateTargetSlot,
   resetTargetRow, createDuelTarget, setDuelState, createCountdownDisplay, setCountdown,
@@ -13,8 +13,11 @@ let _engine = null;
 let _currentKey = '';
 let _soundOn = false;
 let _loopOn = false;
+let _loopDelaySeconds = 3; // configurable wait between loops
 let _disciplineId = '';
 let _modeId = '';
+let _shouldLoop = false;
+let _isResting = false;
 
 // DOM refs updated on each render (survive language change via data-i18n-key walk)
 let _signalBanner = null;
@@ -25,14 +28,15 @@ let _seriesCounter = null;
 let _controlBar = null;
 let _soundToggle = null;
 let _loopToggle = null;
+let _loopDelayRow = null;
+let _loopDelayInput = null;
 
 // Match state tracking
 let _seriesIndex = 0;
 let _stageIndex = 0;
 let _countdownActive = false;
-let _countdownStart = 0;    // green-light elapsed time
-let _countdownDuration = 0; // series duration in ms
-let _tickHandler = null;
+let _countdownStart = 0;    // elapsed time when countdown period started
+let _countdownDuration = 0; // countdown duration in ms
 
 export function renderPractice(container, disciplineId, modeId) {
   if (!DISCIPLINES[disciplineId] || !DISCIPLINES[disciplineId].modes[modeId]) {
@@ -54,7 +58,9 @@ export function renderPractice(container, disciplineId, modeId) {
     _stageIndex = 0;
     _soundOn = false;
     _loopOn = false;
+    _isResting = false;
     _countdownActive = false;
+    _shouldLoop = false;
     _createEngine();
   } else {
     // Re-attach engine listener to new DOM
@@ -65,6 +71,9 @@ export function renderPractice(container, disciplineId, modeId) {
 
   if (_soundToggle) _soundToggle._setState(_soundOn);
   if (_loopToggle) _loopToggle._setState(_loopOn);
+  if (_loopDelayInput) _loopDelayInput.value = _loopDelaySeconds;
+  _updateLoopDelayVisibility();
+  _updateLoopInputState();
 }
 
 function _buildDOM(container, disciplineId, modeId) {
@@ -91,7 +100,6 @@ function _buildDOM(container, disciplineId, modeId) {
   modeName.className = 'mode-bar-name';
   modeName.dataset.i18nKey = `mode.${modeId}.name`;
   modeName.textContent = '';
-  // Import t lazily to avoid circular at module level
   import('../i18n.js').then(({ t }) => { modeName.textContent = t(`mode.${modeId}.name`); });
   const modeInfoBtn = document.createElement('button');
   modeInfoBtn.className = 'info-btn info-btn--sm';
@@ -121,9 +129,8 @@ function _buildDOM(container, disciplineId, modeId) {
   _signalBanner = createSignalBanner();
   main.append(_signalBanner);
 
-  // Target row (hidden in duel mode, shown in timed modes)
+  // Target row — always visible (duel mode shows recommended shot slots)
   _targetRow = createTargetRow(5);
-  if (hasDuel) _targetRow.classList.add('target-row--hidden');
   main.append(_targetRow);
 
   // Countdown
@@ -159,7 +166,10 @@ function _buildDOM(container, disciplineId, modeId) {
       i18nKey: 'btn.loop',
       icon: '🔁',
       initialState: _loopOn,
-      onToggle: val => { _loopOn = val; },
+      onToggle: val => {
+        _loopOn = val;
+        _updateLoopDelayVisibility();
+      },
     });
     toggleRow.append(_loopToggle);
   } else {
@@ -167,6 +177,48 @@ function _buildDOM(container, disciplineId, modeId) {
   }
 
   main.append(toggleRow);
+
+  // Loop delay row — only for loop-capable modes
+  if (hasLoop && !isRealMatch) {
+    _loopDelayRow = document.createElement('div');
+    _loopDelayRow.className = 'loop-delay-row';
+    _loopDelayRow.hidden = !_loopOn;
+
+    const label = document.createElement('span');
+    label.className = 'loop-delay-label';
+    label.dataset.i18nKey = 'label.loop_delay';
+    import('../i18n.js').then(({ t }) => { label.textContent = t('label.loop_delay'); });
+
+    _loopDelayInput = document.createElement('input');
+    _loopDelayInput.type = 'number';
+    _loopDelayInput.className = 'loop-delay-input';
+    _loopDelayInput.min = '0';
+    _loopDelayInput.max = '300';
+    _loopDelayInput.step = '1';
+    _loopDelayInput.value = _loopDelaySeconds;
+    _loopDelayInput.disabled = true; // starts disabled until paused
+    _loopDelayInput.addEventListener('change', () => {
+      const val = parseInt(_loopDelayInput.value, 10);
+      _loopDelaySeconds = Number.isFinite(val) && val >= 0 ? val : 0;
+      _loopDelayInput.value = _loopDelaySeconds;
+    });
+    // Prevent non-numeric input
+    _loopDelayInput.addEventListener('keydown', e => {
+      if (['-', '+', 'e', 'E', '.'].includes(e.key)) e.preventDefault();
+    });
+
+    const unit = document.createElement('span');
+    unit.className = 'loop-delay-unit';
+    unit.dataset.i18nKey = 'label.loop_delay_unit';
+    import('../i18n.js').then(({ t }) => { unit.textContent = t('label.loop_delay_unit'); });
+
+    _loopDelayRow.append(label, _loopDelayInput, unit);
+    main.append(_loopDelayRow);
+  } else {
+    _loopDelayRow = null;
+    _loopDelayInput = null;
+  }
+
   container.append(main);
 }
 
@@ -181,8 +233,8 @@ function _destroyEngine() {
     _engine.destroy();
     _engine = null;
   }
-  _tickHandler = null;
   _countdownActive = false;
+  _shouldLoop = false;
 }
 
 function _attachEngineListeners() {
@@ -233,31 +285,34 @@ function _onSeqEvent(e) {
     case 'away': {
       if (_duelTarget) setDuelState(_duelTarget, 'away');
       setSignalState(_signalBanner, 'away');
-      if (payload.shotIndex === 0) playAttentionRapid();
+      // Clear face countdown and show away countdown
+      const awayMode = getMode(_disciplineId, _modeId);
+      _countdownStart = _engine.elapsedMs;
+      _countdownDuration = (awayMode?.duelAwaySeconds ?? 7) * 1000;
+      _countdownActive = true;
+      playAttentionRapid();
       break;
     }
     case 'face': {
       if (_duelTarget) setDuelState(_duelTarget, 'face');
       setSignalState(_signalBanner, 'face');
       playShootSignal();
-      if (_soundOn) playShotSound();
+      // Start face countdown (critical 3-second shooting window)
+      const faceMode = getMode(_disciplineId, _modeId);
+      _countdownStart = _engine.elapsedMs;
+      _countdownDuration = (faceMode?.duelFaceSeconds ?? 3) * 1000;
+      _countdownActive = true;
       break;
     }
     case 'series_end': {
       _countdownActive = false;
-      setCountdown(_countdown, 0);
+      setCountdown(_countdown, null);
+      setSignalState(_signalBanner, 'idle');
       _seriesIndex++;
+      playSeriesEndSignal();
+      // Flag loop restart; actual restart happens in _onDone to avoid state conflict
       if (_loopOn && !getMode(_disciplineId, _modeId)?.isRealMatch) {
-        // Restart the engine for another series loop
-        _engine.reset();
-        _seriesIndex = 0;
-        resetTargetRow(_targetRow);
-        setSignalState(_signalBanner, 'idle');
-        setCountdown(_countdown, null);
-        setTimeout(() => {
-          _engine.start();
-          setPlayState(_controlBar, true);
-        }, 500);
+        _shouldLoop = true;
       }
       break;
     }
@@ -266,15 +321,18 @@ function _onSeqEvent(e) {
       _countdownActive = false;
       playRestSignal();
       resetTargetRow(_targetRow);
-      // Show rest countdown
       _countdownDuration = payload.durationMs;
       _countdownStart = _engine.elapsedMs;
       _countdownActive = true;
+      _isResting = true;
+      _updateLoopInputState();
       break;
     }
     case 'rest_end': {
       _countdownActive = false;
       setCountdown(_countdown, null);
+      _isResting = false;
+      _updateLoopInputState();
       break;
     }
     case 'stage_break_start': {
@@ -283,10 +341,18 @@ function _onSeqEvent(e) {
       playRestSignal();
       resetTargetRow(_targetRow);
       _stageIndex++;
+      _countdownDuration = payload.durationMs;
+      _countdownStart = _engine.elapsedMs;
+      _countdownActive = true;
+      _isResting = true;
+      _updateLoopInputState();
       break;
     }
     case 'stage_break_end': {
+      _countdownActive = false;
       setCountdown(_countdown, null);
+      _isResting = false;
+      _updateLoopInputState();
       break;
     }
     case 'match_end': {
@@ -304,36 +370,64 @@ function _onSeqEvent(e) {
 function _onTick(e) {
   if (!_countdownActive) return;
   const { elapsedMs } = e.detail;
-  const elapsedInSeries = elapsedMs - _countdownStart;
-  const remaining = (_countdownDuration - elapsedInSeries) / 1000;
+  const elapsedInPeriod = elapsedMs - _countdownStart;
+  const remaining = (_countdownDuration - elapsedInPeriod) / 1000;
   setCountdown(_countdown, Math.max(0, remaining));
 }
 
 function _onDone() {
-  setPlayState(_controlBar, false);
   _countdownActive = false;
+  _isResting = false;
+
+  if (_shouldLoop) {
+    _shouldLoop = false;
+    _seriesIndex = 0;
+    setSignalState(_signalBanner, 'idle');
+    resetTargetRow(_targetRow);
+    setCountdown(_countdown, null);
+    if (_duelTarget) setDuelState(_duelTarget, 'away');
+    setPlayState(_controlBar, false);
+    _updateLoopInputState();
+    const delayMs = Math.max(0, _loopDelaySeconds) * 1000;
+    setTimeout(() => {
+      _destroyEngine();
+      _createEngine();
+      _engine.start();
+      setPlayState(_controlBar, true);
+      _updateLoopInputState();
+    }, delayMs);
+  } else {
+    setPlayState(_controlBar, false);
+    _updateLoopInputState();
+  }
 }
 
 function _handlePlayPause() {
   if (!_engine) return;
 
   if (_engine.isDone) {
-    _handleRepeat();
+    // Reset to idle and start immediately (treat as "replay")
+    _handleReset();
+    _engine.start();
+    setPlayState(_controlBar, true);
     return;
   }
 
   if (_engine.isRunning) {
     _engine.pause();
     setPlayState(_controlBar, false);
+    _updateLoopInputState();
   } else if (_engine.isPaused) {
     _engine.resume();
     setPlayState(_controlBar, true);
+    _updateLoopInputState();
   } else {
     // idle — start fresh
     _seriesIndex = 0;
     _stageIndex = 0;
     _engine.start();
     setPlayState(_controlBar, true);
+    _updateLoopInputState();
   }
 }
 
@@ -343,11 +437,15 @@ function _handleReset() {
   _seriesIndex = 0;
   _stageIndex = 0;
   _countdownActive = false;
+  _shouldLoop = false;
+  _isResting = false;
   setSignalState(_signalBanner, 'idle');
   resetTargetRow(_targetRow);
   setCountdown(_countdown, null);
   if (_duelTarget) setDuelState(_duelTarget, 'away');
+  setPlayState(_controlBar, false);
   _updateSeriesCounter();
+  _updateLoopInputState();
   // Re-create engine so sequence is fresh
   _destroyEngine();
   _createEngine();
@@ -386,4 +484,17 @@ function _restoreState() {
   if (_duelTarget) setDuelState(_duelTarget, 'away');
   setPlayState(_controlBar, _engine.isRunning);
   _updateSeriesCounter();
+  _updateLoopInputState();
+}
+
+// Show/hide the loop delay row based on loop toggle state
+function _updateLoopDelayVisibility() {
+  if (_loopDelayRow) _loopDelayRow.hidden = !_loopOn;
+}
+
+// Enable the loop delay input only when engine is paused and not in a rest period
+function _updateLoopInputState() {
+  if (!_loopDelayInput) return;
+  const isPaused = _engine?.isPaused ?? false;
+  _loopDelayInput.disabled = !isPaused || _isResting;
 }

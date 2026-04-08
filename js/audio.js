@@ -30,16 +30,43 @@ export function playShootSignal() {
   _beep(ctx, 660, 0.7, 0, 0.02);
 }
 
-// Short click — optional shot indicator sound
+// Noise-based gunshot — optional shot indicator sound
 export function playShotSound() {
   const ctx = _getCtx();
-  _beep(ctx, 1100, 0.05, 0, 0.01);
+  const duration = 0.28;
+  const sr = ctx.sampleRate;
+  const buf = ctx.createBuffer(1, sr * duration, sr);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    // Exponential decay on white noise to simulate a shot crack
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sr * 0.06));
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  // Lowpass to add body to the crack
+  const lpf = ctx.createBiquadFilter();
+  lpf.type = 'lowpass';
+  lpf.frequency.value = 1200;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(1.0, ctx.currentTime);
+  src.connect(lpf);
+  lpf.connect(gain);
+  gain.connect(ctx.destination);
+  src.start(ctx.currentTime);
+  src.stop(ctx.currentTime + duration);
 }
 
 // Short tone — series end / rest notification
 export function playRestSignal() {
   const ctx = _getCtx();
   _beep(ctx, 330, 0.4, 0, 0.05);
+}
+
+// Descending two-tone — distinct series-end indicator
+export function playSeriesEndSignal() {
+  const ctx = _getCtx();
+  _beep(ctx, 660, 0.2, 0,    0.03);
+  _beep(ctx, 440, 0.3, 0.22, 0.05);
 }
 
 function _beep(ctx, freqHz, durationS, delayS, rampS) {

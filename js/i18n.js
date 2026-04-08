@@ -88,6 +88,8 @@ const TRANSLATIONS = {
     'btn.info': 'Info',
 
     // Labels
+    'label.loop_delay': 'Wait between loops',
+    'label.loop_delay_unit': 's',
     'label.series': 'Series {current} of {total}',
     'label.stage': 'Stage {current} of {total}',
     'label.half': 'Half {current} of {total}',
@@ -97,8 +99,8 @@ const TRANSLATIONS = {
     'label.real_match_last': 'Full Competition',
 
     // Language names (shown in their own language)
-    'lang.en': 'EN · English',
-    'lang.es': 'ES · Español',
+    'lang.en': '🇬🇧 English',
+    'lang.es': '🇪🇸 Español',
   },
 
   es: {
@@ -183,6 +185,8 @@ const TRANSLATIONS = {
     'btn.close': 'Cerrar',
     'btn.info': 'Info',
 
+    'label.loop_delay': 'Espera entre bucles',
+    'label.loop_delay_unit': 's',
     'label.series': 'Serie {current} de {total}',
     'label.stage': 'Fase {current} de {total}',
     'label.half': 'Mitad {current} de {total}',
@@ -191,8 +195,8 @@ const TRANSLATIONS = {
     'label.disciplines': 'Disciplinas',
     'label.real_match_last': 'Competición Completa',
 
-    'lang.en': 'EN · English',
-    'lang.es': 'ES · Español',
+    'lang.en': '🇬🇧 English',
+    'lang.es': '🇪🇸 Español',
   },
 };
 

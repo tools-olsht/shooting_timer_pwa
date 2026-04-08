@@ -168,6 +168,8 @@ function _buildSingleModeSequence(discipline, mode, startOffsetMs) {
       events.push({ offsetMs: t, type: 'away', payload: { shotIndex: i } });
       t += mode.duelAwaySeconds * 1000;
       events.push({ offsetMs: t, type: 'face', payload: { shotIndex: i } });
+      // Recommended shot indicator at ~2.7s into face window (ISSF timing guideline)
+      events.push({ offsetMs: t + 2700, type: 'shot_target', payload: { shotIndex: i } });
       t += mode.duelFaceSeconds * 1000;
     }
     events.push({ offsetMs: t, type: 'series_end', payload: {} });

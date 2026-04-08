@@ -242,9 +242,7 @@ export function createControlBar({ onPlay, onReset, onRepeat }) {
   }
 
   playBtn.addEventListener('click', () => {
-    _setPlayState(!_isPlaying);
-    if (_isPlaying) onPlay();
-    else onPlay(); // will be handled by practice.js toggle logic
+    onPlay(); // practice.js controls all state via setPlayState()
   });
 
   // Expose setPlayState so practice.js can sync UI with engine state
