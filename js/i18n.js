@@ -110,7 +110,7 @@ const TRANSLATIONS = {
     'discipline.standard_pistol.subtitle': 'Hombres · Calibre .22 · 60 disparos',
     'discipline.pistol_25m.name': 'Pistola 25m / Fuego Central',
     'discipline.pistol_25m.subtitle': 'Mujeres .22 LR · Hombres .32 · 60 disparos',
-    'discipline.rapid_fire.name': 'Pistola de Fuego Rápido (25m)',
+    'discipline.rapid_fire.name': 'Pistola Velocidad (25m)',
     'discipline.rapid_fire.subtitle': 'Hombres · 5 dianas · 60 disparos',
 
     'discipline.standard_pistol.desc': 'La Pistola Estándar es el puente entre el tiro de precisión lento y el tiro rápido. Los tiradores realizan 60 disparos a 25 metros con pistola de calibre .22, divididos en tres fases de 20 disparos cada una (4 series de 5 disparos), con tiempos progresivamente más cortos.',
@@ -143,7 +143,7 @@ const TRANSLATIONS = {
     'mode.duel.rules': 'Por serie: 5 exposiciones × (7s de costado + 3s de frente) = 50 segundos.\n1 disparo por exposición de 3 segundos · Brazo a 45°.\nUsa el botón Bucle para repetir la serie de 5 disparos continuamente.',
 
     'mode.8s.name': '8 Segundos',
-    'mode.8s.desc': 'Serie de Fuego Rápido con límite de 8 segundos. Dispara una vez a cada una de 5 dianas adyacentes. La serie más larga del Fuego Rápido — concéntrate en el ritmo.',
+    'mode.8s.desc': 'Serie de Fuego Rápido con límite de 8 segundos. Dispara una vez a cada una de 5 dianas adyacentes. La serie más larga de Pistola Velocidad — concéntrate en el ritmo.',
     'mode.8s.rules': '5 disparos a 5 dianas · 8 segundos · Brazo a 45°.\nConsejo: Dianas a los 3, 4.2, 5.4, 6.6, 7.8 segundos. Descanso 12s entre series en bucle.',
 
     'mode.6s.name': '6 Segundos',

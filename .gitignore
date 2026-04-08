@@ -141,3 +141,6 @@ vite.config.ts.timestamp-*
 # Claude files
 CLAUDE.md
 .claude/
+
+# Playwright MCP
+.playwright-mcp/
