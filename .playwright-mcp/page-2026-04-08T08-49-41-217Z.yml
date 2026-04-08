@@ -1,0 +1,24 @@
+- main [ref=e2]:
+  - navigation [ref=e3]:
+    - heading "Shooting Timer" [level=1] [ref=e5]
+    - combobox "Language" [ref=e7] [cursor=pointer]:
+      - option "🇺🇸 English" [selected]
+      - option "🇪🇸 Español"
+  - main [ref=e8]:
+    - paragraph [ref=e9]: Disciplines
+    - generic [ref=e10]:
+      - article [ref=e11] [cursor=pointer]:
+        - generic [ref=e12]:
+          - heading "Standard Pistol (25m)" [level=2] [ref=e13]
+          - paragraph [ref=e14]: Men's · .22 caliber · 60 shots
+        - button "Info" [ref=e15]: "?"
+      - article [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]:
+          - heading "25m Pistol / Center Fire" [level=2] [ref=e18]
+          - paragraph [ref=e19]: Women's .22 LR · Men's .32 · 60 shots
+        - button "Info" [ref=e20]: "?"
+      - article [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]:
+          - heading "Rapid Fire Pistol (25m)" [level=2] [ref=e23]
+          - paragraph [ref=e24]: Men's · 5 targets · 60 shots
+        - button "Info" [ref=e25]: "?"

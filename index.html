@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- PWA / iOS -->
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Shot Timer">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Shot Timer">
+
+  <!-- Security -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self';">
+
+  <!-- SEO / description -->
+  <meta name="description" content="ISSF Olympic pistol shooting timer for Standard Pistol, 25m Pistol, and Rapid Fire disciplines. Works offline.">
+
+  <!-- Manifest and icons -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="./styles/tokens.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/screens.css">
+  <link rel="stylesheet" href="./styles/animations.css">
+
+  <title>Shooting Timer</title>
+</head>
+<body>
+  <!-- App mount point -->
+  <div id="app" role="main" aria-live="polite"></div>
+
+  <!-- Info dialog overlay (singleton) -->
+  <div id="dialog-overlay" role="dialog" aria-modal="true" hidden></div>
+
+  <!-- ES module entry — no inline JS; CSP 'self' safe -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

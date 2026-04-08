@@ -1,0 +1,24 @@
+- main [ref=e2]:
+  - navigation [ref=e3]:
+    - heading "Temporizador de Tiro" [level=1] [ref=e26]
+    - combobox "Language" [ref=e7] [cursor=pointer]:
+      - option "🇺🇸 English"
+      - option "🇪🇸 Español" [selected]
+  - main [ref=e8]:
+    - paragraph [ref=e9]: Disciplinas
+    - generic [ref=e10]:
+      - article [ref=e11] [cursor=pointer]:
+        - generic [ref=e12]:
+          - heading "Pistola Estándar (25m)" [level=2] [ref=e27]
+          - paragraph [ref=e14]: Hombres · Calibre .22 · 60 disparos
+        - button "Info" [ref=e15]: "?"
+      - article [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]:
+          - heading "Pistola 25m / Fuego Central" [level=2] [ref=e28]
+          - paragraph [ref=e19]: Mujeres .22 LR · Hombres .32 · 60 disparos
+        - button "Info" [ref=e20]: "?"
+      - article [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]:
+          - heading "Pistola de Fuego Rápido (25m)" [level=2] [ref=e29]
+          - paragraph [ref=e24]: Hombres · 5 dianas · 60 disparos
+        - button "Info" [ref=e25]: "?"

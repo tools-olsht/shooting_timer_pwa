@@ -1,0 +1,33 @@
+- main [ref=e2]:
+  - navigation [ref=e3]:
+    - button "Back" [ref=e5] [cursor=pointer]:
+      - generic [ref=e6]: ‹
+      - generic [ref=e7]: Back
+    - heading "Standard Pistol (25m)" [level=1] [ref=e9]
+    - combobox "Language" [ref=e11] [cursor=pointer]:
+      - option "🇺🇸 English" [selected]
+      - option "🇪🇸 Español"
+  - generic [ref=e12]:
+    - generic [ref=e13]: 10 Seconds
+    - button "Info" [ref=e14] [cursor=pointer]: "?"
+  - main [ref=e15]:
+    - generic [ref=e17]: SHOOT
+    - generic [ref=e30]: "4"
+    - generic [ref=e31]: Series 1 of 4
+    - generic [ref=e32]:
+      - button "Pause" [ref=e49] [cursor=pointer]:
+        - generic [ref=e34]: ⏸
+        - generic [ref=e35]: Pause
+      - button "Reset" [ref=e36] [cursor=pointer]:
+        - generic [ref=e37]: ↺
+        - generic [ref=e38]: Reset
+      - button "Repeat" [ref=e39] [cursor=pointer]:
+        - generic [ref=e40]: ⟳
+        - generic [ref=e41]: Repeat
+    - generic [ref=e42]:
+      - button "🔊 Sound" [ref=e43] [cursor=pointer]:
+        - generic [ref=e44]: 🔊
+        - generic [ref=e45]: Sound
+      - button "🔁 Loop" [ref=e46] [cursor=pointer]:
+        - generic [ref=e47]: 🔁
+        - generic [ref=e48]: Loop

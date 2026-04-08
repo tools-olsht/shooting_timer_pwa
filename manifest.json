@@ -1,0 +1,27 @@
+{
+  "name": "Shooting Timer",
+  "short_name": "Shot Timer",
+  "description": "ISSF Olympic pistol shooting timer for Standard Pistol, 25m Pistol, and Rapid Fire disciplines",
+  "start_url": "/shooting_timer_pwa/",
+  "scope": "/shooting_timer_pwa/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "en",
+  "categories": ["sports", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

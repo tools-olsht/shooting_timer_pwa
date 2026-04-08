@@ -1,0 +1,25 @@
+- main [ref=e2]:
+  - navigation [ref=e34]:
+    - button "Back" [ref=e36] [cursor=pointer]:
+      - generic [ref=e37]: ‹
+      - generic [ref=e38]: Back
+    - heading "Standard Pistol (25m)" [level=1] [ref=e40]
+    - combobox "Language" [ref=e42] [cursor=pointer]:
+      - option "🇺🇸 English" [selected]
+      - option "🇪🇸 Español"
+  - main [ref=e43]:
+    - paragraph [ref=e44]: Select Training Mode
+    - generic [ref=e45]:
+      - article [ref=e46] [cursor=pointer]:
+        - heading "150 Seconds" [level=3] [ref=e48]
+        - button "Info" [ref=e49]: "?"
+      - article [ref=e50] [cursor=pointer]:
+        - heading "20 Seconds" [level=3] [ref=e52]
+        - button "Info" [ref=e53]: "?"
+      - article [ref=e54] [cursor=pointer]:
+        - heading "10 Seconds" [level=3] [ref=e56]
+        - button "Info" [ref=e57]: "?"
+      - generic [ref=e59]: Full Competition
+      - article [ref=e60] [cursor=pointer]:
+        - heading "Real Match" [level=3] [ref=e62]
+        - button "Info" [ref=e63]: "?"

@@ -1,0 +1,32 @@
+- main [ref=e2]:
+  - navigation [ref=e30]:
+    - button "Volver" [ref=e32] [cursor=pointer]:
+      - generic [ref=e33]: ‹
+      - generic [ref=e34]: Volver
+    - heading "Pistola 25m / Fuego Central" [level=1] [ref=e36]
+    - combobox "Language" [ref=e38] [cursor=pointer]:
+      - option "🇺🇸 English"
+      - option "🇪🇸 Español" [selected]
+  - generic [ref=e39]:
+    - generic [ref=e40]: Duelo
+    - button "Info" [ref=e41] [cursor=pointer]: "?"
+  - main [ref=e42]:
+    - generic [ref=e47]: —
+    - generic [ref=e49]: —
+    - generic [ref=e51]:
+      - button "Iniciar" [ref=e52] [cursor=pointer]:
+        - generic [ref=e53]: ▶
+        - generic [ref=e54]: Iniciar
+      - button "Reiniciar" [ref=e55] [cursor=pointer]:
+        - generic [ref=e56]: ↺
+        - generic [ref=e57]: Reiniciar
+      - button "Repetir" [ref=e58] [cursor=pointer]:
+        - generic [ref=e59]: ⟳
+        - generic [ref=e60]: Repetir
+    - generic [ref=e61]:
+      - button "🔊 Sonido" [ref=e62] [cursor=pointer]:
+        - generic [ref=e63]: 🔊
+        - generic [ref=e64]: Sonido
+      - button "🔁 Bucle" [ref=e65] [cursor=pointer]:
+        - generic [ref=e66]: 🔁
+        - generic [ref=e67]: Bucle

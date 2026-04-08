@@ -1,0 +1,66 @@
+/* ─── Home Screen ─────────────────────────────────────────── */
+.home-main {
+  padding-top: var(--sp-3);
+  gap: var(--sp-3);
+}
+
+.home-subtitle {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  padding: 0 var(--sp-1);
+  margin-bottom: calc(-1 * var(--sp-1));
+}
+
+/* ─── Modes Screen ─────────────────────────────────────────── */
+.modes-main {
+  padding-top: var(--sp-3);
+  gap: var(--sp-2);
+}
+
+.modes-subtitle {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  padding: 0 var(--sp-1);
+  margin-bottom: calc(-1 * var(--sp-1));
+}
+
+/* ─── Mode Bar (practice screen) ─────────────────────────────── */
+.mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mode-bar-name {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ─── Practice Screen ─────────────────────────────────────────── */
+.practice-main {
+  padding-top: var(--sp-2);
+  gap: var(--sp-1);
+  align-items: stretch;
+}
+
+/* Practice layout adapts to viewport height */
+@media (max-height: 700px) {
+  .countdown-display { font-size: 3rem; }
+  .signal-banner { min-height: 56px; }
+  .signal-label { font-size: 1.4rem; }
+}
+
+@media (min-height: 800px) {
+  .countdown-display { font-size: 5rem; }
+  .target-slot { max-width: 72px; }
+}
