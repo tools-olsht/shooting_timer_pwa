@@ -18,6 +18,9 @@ let _disciplineId = '';
 let _modeId = '';
 let _shouldLoop = false;
 let _isResting = false;
+let _isSighting = false;
+let _loopTimeoutId = null;
+let _loopTickInterval = null;
 
 // DOM refs updated on each render (survive language change via data-i18n-key walk)
 let _signalBanner = null;
@@ -59,6 +62,7 @@ export function renderPractice(container, disciplineId, modeId) {
     _soundOn = false;
     _loopOn = false;
     _isResting = false;
+    _isSighting = false;
     _countdownActive = false;
     _shouldLoop = false;
     _createEngine();
@@ -196,7 +200,6 @@ function _buildDOM(container, disciplineId, modeId) {
     _loopDelayInput.max = '300';
     _loopDelayInput.step = '1';
     _loopDelayInput.value = _loopDelaySeconds;
-    _loopDelayInput.disabled = true; // starts disabled until paused
     _loopDelayInput.addEventListener('change', () => {
       const val = parseInt(_loopDelayInput.value, 10);
       _loopDelaySeconds = Number.isFinite(val) && val >= 0 ? val : 0;
@@ -229,12 +232,24 @@ function _createEngine() {
 }
 
 function _destroyEngine() {
+  if (_loopTimeoutId !== null) {
+    clearTimeout(_loopTimeoutId);
+    _loopTimeoutId = null;
+  }
+  _clearLoopTick();
   if (_engine) {
     _engine.destroy();
     _engine = null;
   }
   _countdownActive = false;
   _shouldLoop = false;
+}
+
+function _clearLoopTick() {
+  if (_loopTickInterval !== null) {
+    clearInterval(_loopTickInterval);
+    _loopTickInterval = null;
+  }
 }
 
 function _attachEngineListeners() {
@@ -257,13 +272,15 @@ function _onSeqEvent(e) {
 
   switch (type) {
     case 'attention': {
-      setSignalState(_signalBanner, 'attention');
+      _isSighting = payload.isSighting ?? false;
+      setSignalState(_signalBanner, _isSighting ? 'sighting' : 'attention');
       resetTargetRow(_targetRow);
       setCountdown(_countdown, null);
       _countdownActive = false;
       if (_duelTarget) setDuelState(_duelTarget, 'away');
-      const mode = getMode(_disciplineId, _modeId);
-      if (mode?.signalType === 'rapid') playAttentionRapid();
+      // Use payload.modeId to get the right mode (needed in real_match where _modeId is 'real_match')
+      const attMode = getMode(_disciplineId, payload.modeId ?? _modeId);
+      if (attMode?.signalType === 'rapid') playAttentionRapid();
       else playAttentionSlow();
       break;
     }
@@ -271,9 +288,10 @@ function _onSeqEvent(e) {
     case 'start': {
       setSignalState(_signalBanner, type);
       playShootSignal();
-      const mode = getMode(_disciplineId, _modeId);
+      // Use payload.modeId so countdown shows the correct duration in real_match
+      const activeMode = getMode(_disciplineId, payload.modeId ?? _modeId);
       _countdownStart = _engine.elapsedMs;
-      _countdownDuration = (mode?.durationSeconds ?? 0) * 1000;
+      _countdownDuration = (activeMode?.durationSeconds ?? 0) * 1000;
       _countdownActive = true;
       break;
     }
@@ -285,8 +303,7 @@ function _onSeqEvent(e) {
     case 'away': {
       if (_duelTarget) setDuelState(_duelTarget, 'away');
       setSignalState(_signalBanner, 'away');
-      // Clear face countdown and show away countdown
-      const awayMode = getMode(_disciplineId, _modeId);
+      const awayMode = getMode(_disciplineId, payload.modeId ?? _modeId);
       _countdownStart = _engine.elapsedMs;
       _countdownDuration = (awayMode?.duelAwaySeconds ?? 7) * 1000;
       _countdownActive = true;
@@ -297,8 +314,7 @@ function _onSeqEvent(e) {
       if (_duelTarget) setDuelState(_duelTarget, 'face');
       setSignalState(_signalBanner, 'face');
       playShootSignal();
-      // Start face countdown (critical 3-second shooting window)
-      const faceMode = getMode(_disciplineId, _modeId);
+      const faceMode = getMode(_disciplineId, payload.modeId ?? _modeId);
       _countdownStart = _engine.elapsedMs;
       _countdownDuration = (faceMode?.duelFaceSeconds ?? 3) * 1000;
       _countdownActive = true;
@@ -308,16 +324,20 @@ function _onSeqEvent(e) {
       _countdownActive = false;
       setCountdown(_countdown, null);
       setSignalState(_signalBanner, 'idle');
-      _seriesIndex++;
+      // Don't count sighting series in the series counter
+      if (!payload.isSighting) {
+        _seriesIndex++;
+      }
+      _isSighting = false;
       playSeriesEndSignal();
-      // Flag loop restart; actual restart happens in _onDone to avoid state conflict
       if (_loopOn && !getMode(_disciplineId, _modeId)?.isRealMatch) {
         _shouldLoop = true;
       }
       break;
     }
     case 'rest_start': {
-      setSignalState(_signalBanner, 'rest');
+      // Show LOAD banner for competition loading periods, REST for generic rests
+      setSignalState(_signalBanner, payload.isLoading ? 'loading' : 'rest');
       _countdownActive = false;
       playRestSignal();
       resetTargetRow(_targetRow);
@@ -355,11 +375,30 @@ function _onSeqEvent(e) {
       _updateLoopInputState();
       break;
     }
+    case 'half_break_start': {
+      setSignalState(_signalBanner, 'half_break');
+      _countdownActive = false;
+      playRestSignal();
+      resetTargetRow(_targetRow);
+      _countdownDuration = payload.durationMs;
+      _countdownStart = _engine.elapsedMs;
+      _countdownActive = true;
+      _isResting = true;
+      _updateLoopInputState();
+      break;
+    }
+    case 'half_break_end': {
+      _countdownActive = false;
+      setCountdown(_countdown, null);
+      _isResting = false;
+      _updateLoopInputState();
+      break;
+    }
     case 'match_end': {
       setSignalState(_signalBanner, 'match_end');
       setCountdown(_countdown, null);
       _countdownActive = false;
-      setPlayState(_controlBar, false);
+      _syncPlayState(false);
       break;
     }
   }
@@ -382,51 +421,85 @@ function _onDone() {
   if (_shouldLoop) {
     _shouldLoop = false;
     _seriesIndex = 0;
-    setSignalState(_signalBanner, 'idle');
+    setSignalState(_signalBanner, 'next_loop');
     resetTargetRow(_targetRow);
-    setCountdown(_countdown, null);
     if (_duelTarget) setDuelState(_duelTarget, 'away');
-    setPlayState(_controlBar, false);
+    _syncPlayState(false);
     _updateLoopInputState();
     const delayMs = Math.max(0, _loopDelaySeconds) * 1000;
-    setTimeout(() => {
+
+    _clearLoopTick(); // ensure no stale interval
+    if (delayMs > 0) {
+      // Show countdown ticking down to next loop (local captures avoid stale module-level state)
+      const loopStart = performance.now();
+      setCountdown(_countdown, delayMs / 1000);
+      _loopTickInterval = setInterval(() => {
+        const rem = (delayMs - (performance.now() - loopStart)) / 1000;
+        setCountdown(_countdown, Math.max(0, rem));
+        if (rem <= 0) _clearLoopTick();
+      }, 100);
+    }
+
+    _loopTimeoutId = setTimeout(() => {
+      _loopTimeoutId = null;
+      _clearLoopTick();
+      setCountdown(_countdown, null);
       _destroyEngine();
       _createEngine();
       _engine.start();
-      setPlayState(_controlBar, true);
+      _syncPlayState(true);
       _updateLoopInputState();
     }, delayMs);
   } else {
-    setPlayState(_controlBar, false);
+    _syncPlayState(false);
     _updateLoopInputState();
   }
 }
 
+// Single source of truth for play/pause button visual state.
+function _syncPlayState(playing) {
+  if (_controlBar) setPlayState(_controlBar, playing);
+}
+
 function _handlePlayPause() {
+  // If a loop delay timeout is pending and user clicks play, cancel it and restart immediately
+  if (_loopTimeoutId !== null) {
+    clearTimeout(_loopTimeoutId);
+    _loopTimeoutId = null;
+    _destroyEngine();
+    _createEngine();
+    _seriesIndex = 0;
+    _stageIndex = 0;
+    _engine.start();
+    _syncPlayState(true);
+    _updateLoopInputState();
+    return;
+  }
+
   if (!_engine) return;
 
   if (_engine.isDone) {
-    // Reset to idle and start immediately (treat as "replay")
+    // Engine finished — reset and start fresh (treat as "replay")
     _handleReset();
     _engine.start();
-    setPlayState(_controlBar, true);
+    _syncPlayState(true);
     return;
   }
 
   if (_engine.isRunning) {
     _engine.pause();
-    setPlayState(_controlBar, false);
+    _syncPlayState(false);
     _updateLoopInputState();
   } else if (_engine.isPaused) {
     _engine.resume();
-    setPlayState(_controlBar, true);
+    _syncPlayState(true);
     _updateLoopInputState();
   } else {
     // idle — start fresh
     _seriesIndex = 0;
     _stageIndex = 0;
     _engine.start();
-    setPlayState(_controlBar, true);
+    _syncPlayState(true);
     _updateLoopInputState();
   }
 }
@@ -439,11 +512,12 @@ function _handleReset() {
   _countdownActive = false;
   _shouldLoop = false;
   _isResting = false;
+  _isSighting = false;
   setSignalState(_signalBanner, 'idle');
   resetTargetRow(_targetRow);
   setCountdown(_countdown, null);
   if (_duelTarget) setDuelState(_duelTarget, 'away');
-  setPlayState(_controlBar, false);
+  _syncPlayState(false);
   _updateSeriesCounter();
   _updateLoopInputState();
   // Re-create engine so sequence is fresh
@@ -458,6 +532,11 @@ function _handleRepeat() {
 function _updateSeriesCounter() {
   const mode = getMode(_disciplineId, _modeId);
   if (!mode || !_seriesCounter) return;
+
+  if (_isSighting) {
+    setSeriesCounter(_seriesCounter, 'label.sighting_series', {});
+    return;
+  }
 
   if (mode.isRealMatch) {
     const stages = mode.stages || (mode.halfPattern ? _flattenHalves(mode) : []);
@@ -482,7 +561,7 @@ function _restoreState() {
   setSignalState(_signalBanner, 'idle');
   setCountdown(_countdown, null);
   if (_duelTarget) setDuelState(_duelTarget, 'away');
-  setPlayState(_controlBar, _engine.isRunning);
+  _syncPlayState(_engine.isRunning);
   _updateSeriesCounter();
   _updateLoopInputState();
 }
@@ -492,9 +571,10 @@ function _updateLoopDelayVisibility() {
   if (_loopDelayRow) _loopDelayRow.hidden = !_loopOn;
 }
 
-// Enable the loop delay input only when engine is paused and not in a rest period
+// Enable the loop delay input whenever the engine is not actively running or resting.
+// This allows editing before the first start, while paused, and after the match ends.
 function _updateLoopInputState() {
   if (!_loopDelayInput) return;
-  const isPaused = _engine?.isPaused ?? false;
-  _loopDelayInput.disabled = !isPaused || _isResting;
+  const isRunning = _engine?.isRunning ?? false;
+  _loopDelayInput.disabled = isRunning || _isResting;
 }

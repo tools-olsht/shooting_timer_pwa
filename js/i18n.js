@@ -59,23 +59,26 @@ const TRANSLATIONS = {
     'mode.real_match.name': 'Real Match',
     'mode.real_match.desc': 'Full competition simulation following ISSF rules. Combines all stages in the correct order with official rest times between series and stages.',
 
-    'mode.real_match.standard_pistol.rules': 'Stage 1: 4 × 150s (12s rest between series) → 30s stage break\nStage 2: 4 × 20s (12s rest between series) → 30s stage break\nStage 3: 4 × 10s (12s rest between series)\nTotal: 60 shots',
+    'mode.real_match.standard_pistol.rules': 'Sighting: 1 × 150s trial series\nBlock 1: 4 × 150s (60s loading between series) → 3 min break\nBlock 2: 4 × 20s (60s loading between series) → 3 min break\nBlock 3: 4 × 10s (60s loading between series)\nAttention: 7s · Total: 60 scored shots',
 
-    'mode.real_match.pistol_25m.rules': 'Precision: 6 × 300s (12s rest between series) → 30s stage break\nDuel: 6 × 5-shot duel series (12s rest between series)\nTotal: 60 shots (30 precision + 30 duel)',
+    'mode.real_match.pistol_25m.rules': 'Precision — Sighting: 1 × 300s trial · 6 × 300s (60s loading between) → 3 min break\nDuel — Sighting: 1 × duel trial · 6 × duel series (60s loading between)\nAttention: 7s · Total: 60 scored shots (30 precision + 30 duel)',
 
-    'mode.real_match.rapid_fire.rules': 'Half 1: 2 × 8s → 2 × 6s → 2 × 4s (12s rest between series) → 30s half break\nHalf 2: 2 × 8s → 2 × 6s → 2 × 4s (12s rest between series)\nTotal: 60 shots',
+    'mode.real_match.rapid_fire.rules': 'Sighting: 1 × 8s trial series\nHalf 1: 2 × 8s → 2 × 6s → 2 × 4s (60s loading between series) → 5 min half break\nHalf 2: 2 × 8s → 2 × 6s → 2 × 4s (60s loading between series)\nAttention: 7s · Total: 60 scored shots',
 
     // Timer signals
     'signal.attention': 'ATTENTION',
+    'signal.sighting': 'SIGHTING',
     'signal.shoot': 'SHOOT',
     'signal.start': 'START',
     'signal.rest': 'REST',
+    'signal.loading': 'LOAD',
     'signal.away': 'AWAY',
     'signal.face': 'FACE',
     'signal.ready': 'READY',
     'signal.stage_break': 'STAGE BREAK',
     'signal.half_break': 'HALF BREAK',
     'signal.match_complete': 'MATCH COMPLETE',
+    'signal.next_loop': 'NEXT LOOP',
 
     // Controls
     'btn.play': 'Play',
@@ -97,6 +100,7 @@ const TRANSLATIONS = {
     'label.select_mode': 'Select Training Mode',
     'label.disciplines': 'Disciplines',
     'label.real_match_last': 'Full Competition',
+    'label.sighting_series': 'Sighting Series',
 
     // Language names (shown in their own language)
     'lang.en': '🇬🇧 English',
@@ -159,22 +163,25 @@ const TRANSLATIONS = {
     'mode.real_match.name': 'Competición Real',
     'mode.real_match.desc': 'Simulación completa de competición siguiendo las reglas ISSF. Combina todas las fases en el orden correcto con tiempos de descanso oficiales entre series y fases.',
 
-    'mode.real_match.standard_pistol.rules': 'Fase 1: 4 × 150s (12s descanso entre series) → 30s pausa\nFase 2: 4 × 20s (12s descanso entre series) → 30s pausa\nFase 3: 4 × 10s (12s descanso entre series)\nTotal: 60 disparos',
+    'mode.real_match.standard_pistol.rules': 'Prueba: 1 × 150s serie de prueba\nBloque 1: 4 × 150s (60s carga entre series) → 3 min pausa\nBloque 2: 4 × 20s (60s carga entre series) → 3 min pausa\nBloque 3: 4 × 10s (60s carga entre series)\nAtención: 7s · Total: 60 disparos de competición',
 
-    'mode.real_match.pistol_25m.rules': 'Precisión: 6 × 300s (12s descanso entre series) → 30s pausa\nDuelo: 6 × series de 5 disparos (12s descanso entre series)\nTotal: 60 disparos (30 precisión + 30 duelo)',
+    'mode.real_match.pistol_25m.rules': 'Precisión — Prueba: 1 × 300s · 6 × 300s (60s carga entre series) → 3 min pausa\nDuelo — Prueba: 1 × duelo · 6 × series de duelo (60s carga entre series)\nAtención: 7s · Total: 60 disparos (30 precisión + 30 duelo)',
 
-    'mode.real_match.rapid_fire.rules': 'Mitad 1: 2 × 8s → 2 × 6s → 2 × 4s (12s descanso) → 30s pausa\nMitad 2: 2 × 8s → 2 × 6s → 2 × 4s (12s descanso)\nTotal: 60 disparos',
+    'mode.real_match.rapid_fire.rules': 'Prueba: 1 × 8s serie de prueba\nMitad 1: 2 × 8s → 2 × 6s → 2 × 4s (60s carga entre series) → 5 min pausa\nMitad 2: 2 × 8s → 2 × 6s → 2 × 4s (60s carga entre series)\nAtención: 7s · Total: 60 disparos de competición',
 
     'signal.attention': 'ATENCIÓN',
+    'signal.sighting': 'PRUEBA',
     'signal.shoot': 'FUEGO',
     'signal.start': 'INICIO',
     'signal.rest': 'DESCANSO',
+    'signal.loading': 'CARGAR',
     'signal.away': 'COSTADO',
     'signal.face': 'FRENTE',
     'signal.ready': 'LISTO',
     'signal.stage_break': 'PAUSA DE FASE',
     'signal.half_break': 'PAUSA DE MITAD',
     'signal.match_complete': 'Competición COMPLETA',
+    'signal.next_loop': 'PRÓXIMO BUCLE',
 
     'btn.play': 'Iniciar',
     'btn.pause': 'Pausar',
@@ -194,6 +201,7 @@ const TRANSLATIONS = {
     'label.select_mode': 'Seleccionar Modo de Entrenamiento',
     'label.disciplines': 'Disciplinas',
     'label.real_match_last': 'Competición Completa',
+    'label.sighting_series': 'Serie de Prueba',
 
     'lang.en': '🇬🇧 English',
     'lang.es': '🇪🇸 Español',

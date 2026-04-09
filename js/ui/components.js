@@ -108,28 +108,34 @@ export function setSignalState(banner, type) {
   const classMap = {
     idle: 'signal-banner--idle',
     attention: 'signal-banner--attention',
+    sighting: 'signal-banner--attention',
     shoot: 'signal-banner--shoot',
     start: 'signal-banner--shoot',
     rest: 'signal-banner--rest',
+    loading: 'signal-banner--rest',
     away: 'signal-banner--away',
     face: 'signal-banner--shoot',
     stage_break: 'signal-banner--rest',
     half_break: 'signal-banner--rest',
     match_end: 'signal-banner--rest',
+    next_loop: 'signal-banner--rest',
   };
   banner.classList.add(classMap[type] || 'signal-banner--idle');
 
   const signalKeyMap = {
     idle: null,
     attention: 'signal.attention',
+    sighting: 'signal.sighting',
     shoot: 'signal.shoot',
     start: 'signal.start',
     rest: 'signal.rest',
+    loading: 'signal.loading',
     away: 'signal.away',
     face: 'signal.face',
     stage_break: 'signal.stage_break',
     half_break: 'signal.half_break',
     match_end: 'signal.match_complete',
+    next_loop: 'signal.next_loop',
   };
   const key = signalKeyMap[type];
   if (key) {
@@ -187,11 +193,10 @@ export function createCountdownDisplay() {
 }
 
 export function setCountdown(wrapEl, seconds) {
-  if (seconds === null || seconds === undefined) {
-    wrapEl._display.textContent = '—';
-  } else {
-    wrapEl._display.textContent = seconds >= 0 ? Math.ceil(seconds).toString() : '0';
-  }
+  if (!wrapEl?._display) return;
+  wrapEl._display.textContent = (seconds === null || seconds === undefined)
+    ? '—'
+    : (seconds >= 0 ? Math.ceil(seconds).toString() : '0');
 }
 
 export function createSeriesCounter() {
