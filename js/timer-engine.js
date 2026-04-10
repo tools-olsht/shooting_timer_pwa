@@ -13,10 +13,16 @@ export class TimerEngine extends EventTarget {
     this._tickInterval = null;
     this._state = 'idle'; // 'idle' | 'running' | 'paused' | 'done'
     this._totalMs = sequence.length ? sequence[sequence.length - 1].offsetMs : 0;
+    this._autoPaused = false; // true only when paused by visibility change, not by user
 
     this._onVisibility = () => {
-      if (document.hidden && this._state === 'running') this.pause();
-      else if (!document.hidden && this._state === 'paused') this.resume();
+      if (document.hidden && this._state === 'running') {
+        this.pause();
+        this._autoPaused = true;
+      } else if (!document.hidden && this._state === 'paused' && this._autoPaused) {
+        this._autoPaused = false;
+        this.resume();
+      }
     };
     document.addEventListener('visibilitychange', this._onVisibility);
   }
@@ -45,6 +51,7 @@ export class TimerEngine extends EventTarget {
 
   pause() {
     if (this._state !== 'running') return;
+    this._autoPaused = false;
     this._pausedElapsedMs = this.elapsedMs;
     this._clearTimers();
     this._state = 'paused';
