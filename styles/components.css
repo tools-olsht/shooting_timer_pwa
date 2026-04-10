@@ -279,10 +279,9 @@
 
 .ctrl-btn {
   flex: 1;
-  max-width: 110px;
-  min-height: 52px;
+  min-height: clamp(68px, 12vh, 96px);
   flex-direction: column;
-  gap: 3px;
+  gap: clamp(4px, 1vh, 8px);
   border-radius: var(--radius-md);
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
@@ -299,8 +298,8 @@
 }
 .ctrl-btn--play:active { background: var(--color-blue-hover); }
 
-.ctrl-icon { font-size: 1.2rem; line-height: 1; }
-.ctrl-label { font-size: 0.72rem; color: inherit; opacity: 0.85; }
+.ctrl-icon { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1; }
+.ctrl-label { font-size: clamp(0.85rem, 2.2vw, 1.05rem); color: inherit; opacity: 0.85; }
 
 /* ─── Toggle Buttons ─────────────────────────────────────────── */
 .toggle-row {
@@ -308,6 +307,10 @@
   gap: var(--sp-1);
   justify-content: center;
   margin-top: var(--sp-1);
+}
+
+.toggle-row .toggle-btn {
+  flex: 1;
 }
 
 /* ─── Loop Delay Input ─────────────────────────────────────────── */
@@ -364,14 +367,13 @@
 }
 
 .toggle-btn {
-  min-height: 40px;
+  min-height: clamp(52px, 9vh, 72px);
   padding: 0 var(--sp-2);
   border-radius: var(--radius-pill);
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
-  font-size: 0.85rem;
-  gap: 5px;
+  gap: clamp(5px, 1.2vw, 10px);
   transition: background 0.12s, color 0.12s;
 }
 
@@ -381,8 +383,8 @@
   color: #2997ff;
 }
 
-.toggle-icon { font-size: 1rem; }
-.toggle-label { font-size: 0.82rem; }
+.toggle-icon { font-size: clamp(1.3rem, 4vw, 2rem); }
+.toggle-label { font-size: clamp(0.9rem, 2.2vw, 1.1rem); }
 
 /* ─── Info Dialog ─────────────────────────────────────────── */
 #dialog-overlay {

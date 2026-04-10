@@ -58,6 +58,12 @@
   .countdown-display { font-size: 3rem; }
   .signal-banner { min-height: 56px; }
   .signal-label { font-size: 1.4rem; }
+  .ctrl-btn { min-height: 56px; }
+  .ctrl-icon { font-size: 1.6rem; }
+  .ctrl-label { font-size: 0.78rem; }
+  .toggle-btn { min-height: 44px; }
+  .toggle-icon { font-size: 1.2rem; }
+  .toggle-label { font-size: 0.82rem; }
 }
 
 @media (min-height: 800px) {
