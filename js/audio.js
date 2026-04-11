@@ -1,4 +1,6 @@
 let _ctx = null;
+let _hornBuffer = null;   // decoded AudioBuffer, loaded once
+let _hornLoading = false; // guard against concurrent fetches
 
 function _getCtx() {
   if (!_ctx) _ctx = new AudioContext();
@@ -6,9 +8,25 @@ function _getCtx() {
   return _ctx;
 }
 
+// Preload horn.mp3 into an AudioBuffer so playback is instant and interference-free
+async function _loadHorn() {
+  if (_hornBuffer) return;
+  if (_hornLoading) return;
+  _hornLoading = true;
+  try {
+    const ctx = _getCtx();
+    const res = await fetch('./audio/horn.mp3');
+    const arrayBuf = await res.arrayBuffer();
+    _hornBuffer = await ctx.decodeAudioData(arrayBuf);
+  } catch {
+    _hornLoading = false; // allow a retry on next play attempt
+  }
+}
+
 // Must be called on first user gesture to unlock AudioContext on iOS Safari
 export function unlock() {
   _getCtx();
+  _loadHorn(); // kick off preload; we have a user gesture so fetch is allowed
 }
 
 // Two short high beeps — attention signal for rapid modes (ISSF-style double alert)
@@ -24,10 +42,9 @@ export function playAttentionSlow() {
   _beep(ctx, 440, 0.3, 0, 0.03);
 }
 
-// Strident horn blast — green light / shoot signal
+// Loud horn blast — green light / shoot signal
 export function playShootSignal() {
-  const ctx = _getCtx();
-  _horn(ctx, 0, 1.2);
+  _playHorn(0, 1.5);
 }
 
 // Noise-based gunshot — optional shot indicator sound
@@ -58,66 +75,34 @@ export function playShotSound() {
 
 // Short horn blast — series end / rest notification
 export function playRestSignal() {
-  const ctx = _getCtx();
-  _horn(ctx, 0, 0.6);
+  _playHorn(0, 1.2);
 }
 
-// Two short horn blasts — distinct series-end indicator
+// Single horn blast — series-end indicator
 export function playSeriesEndSignal() {
-  const ctx = _getCtx();
-  _horn(ctx, 0,   0.35);
-  _horn(ctx, 0.5, 0.35);
+  _playHorn(0, 1.2);
 }
 
-// Strident horn: layered sawtooth oscillators + overdrive waveshaper + compressor at 4× gain
-function _horn(ctx, delayS, durationS) {
-  const t = ctx.currentTime + delayS;
-
-  // Hard limiter at the very end of the chain
-  const compressor = ctx.createDynamicsCompressor();
-  compressor.threshold.value = -3;
-  compressor.knee.value = 0;
-  compressor.ratio.value = 20;
-  compressor.attack.value = 0.001;
-  compressor.release.value = 0.05;
-  compressor.connect(ctx.destination);
-
-  // Soft-clip waveshaper — increases perceived loudness via harmonic saturation
-  const shaper = ctx.createWaveShaper();
-  const n = 256;
-  const curve = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const x = (i * 2) / n - 1;
-    curve[i] = (Math.PI + 300) * x / (Math.PI + 300 * Math.abs(x));
+// Play the preloaded horn buffer at the given delay and gain.
+// Each call creates a fresh BufferSourceNode (the spec requires this —
+// sources are one-shot), so no node accumulation occurs across series.
+function _playHorn(delayS, gainValue) {
+  if (!_hornBuffer) {
+    // Buffer not ready yet — try to load and fall back to a loud beep
+    _loadHorn();
+    const ctx = _getCtx();
+    _beep(ctx, 220, 0.8, delayS, 0.05);
+    return;
   }
-  shaper.curve = curve;
-  shaper.oversample = '4x';
-  shaper.connect(compressor);
-
-  // Master gain at 4.0 for maximum drive into the waveshaper
-  const master = ctx.createGain();
-  master.connect(shaper);
-  master.gain.setValueAtTime(4.0, t);
-  master.gain.setValueAtTime(4.0, t + durationS - 0.06);
-  master.gain.exponentialRampToValueAtTime(0.001, t + durationS);
-
-  // Three sawtooth partials for a rich, strident horn timbre
-  const partials = [
-    { freq: 220, gain: 1.0 },
-    { freq: 440, gain: 0.6 },
-    { freq: 660, gain: 0.3 },
-  ];
-  for (const { freq, gain } of partials) {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.value = freq;
-    g.gain.value = gain;
-    osc.connect(g);
-    g.connect(master);
-    osc.start(t);
-    osc.stop(t + durationS);
-  }
+  const ctx = _getCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = _hornBuffer;
+  src.playbackRate.value = 2.0; // 2× speed — shorter, snappier blast
+  const gain = ctx.createGain();
+  gain.gain.value = gainValue;
+  src.connect(gain);
+  gain.connect(ctx.destination);
+  src.start(ctx.currentTime + delayS);
 }
 
 function _beep(ctx, freqHz, durationS, delayS, rampS) {
