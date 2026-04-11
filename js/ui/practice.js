@@ -307,7 +307,7 @@ function _onSeqEvent(e) {
       _countdownStart = _engine.elapsedMs;
       _countdownDuration = (awayMode?.duelAwaySeconds ?? 7) * 1000;
       _countdownActive = true;
-      playAttentionRapid();
+      playRestSignal();
       break;
     }
     case 'face': {
