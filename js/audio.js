@@ -24,10 +24,10 @@ export function playAttentionSlow() {
   _beep(ctx, 440, 0.3, 0, 0.03);
 }
 
-// Long buzzer — green light / shoot signal
+// Strident horn blast — green light / shoot signal
 export function playShootSignal() {
   const ctx = _getCtx();
-  _beep(ctx, 660, 0.7, 0, 0.02);
+  _horn(ctx, 0, 1.2);
 }
 
 // Noise-based gunshot — optional shot indicator sound
@@ -56,17 +56,68 @@ export function playShotSound() {
   src.stop(ctx.currentTime + duration);
 }
 
-// Short tone — series end / rest notification
+// Short horn blast — series end / rest notification
 export function playRestSignal() {
   const ctx = _getCtx();
-  _beep(ctx, 330, 0.4, 0, 0.05);
+  _horn(ctx, 0, 0.6);
 }
 
-// Descending two-tone — distinct series-end indicator
+// Two short horn blasts — distinct series-end indicator
 export function playSeriesEndSignal() {
   const ctx = _getCtx();
-  _beep(ctx, 660, 0.2, 0,    0.03);
-  _beep(ctx, 440, 0.3, 0.22, 0.05);
+  _horn(ctx, 0,   0.35);
+  _horn(ctx, 0.5, 0.35);
+}
+
+// Strident horn: layered sawtooth oscillators + overdrive waveshaper + compressor at 4× gain
+function _horn(ctx, delayS, durationS) {
+  const t = ctx.currentTime + delayS;
+
+  // Hard limiter at the very end of the chain
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -3;
+  compressor.knee.value = 0;
+  compressor.ratio.value = 20;
+  compressor.attack.value = 0.001;
+  compressor.release.value = 0.05;
+  compressor.connect(ctx.destination);
+
+  // Soft-clip waveshaper — increases perceived loudness via harmonic saturation
+  const shaper = ctx.createWaveShaper();
+  const n = 256;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] = (Math.PI + 300) * x / (Math.PI + 300 * Math.abs(x));
+  }
+  shaper.curve = curve;
+  shaper.oversample = '4x';
+  shaper.connect(compressor);
+
+  // Master gain at 4.0 for maximum drive into the waveshaper
+  const master = ctx.createGain();
+  master.connect(shaper);
+  master.gain.setValueAtTime(4.0, t);
+  master.gain.setValueAtTime(4.0, t + durationS - 0.06);
+  master.gain.exponentialRampToValueAtTime(0.001, t + durationS);
+
+  // Three sawtooth partials for a rich, strident horn timbre
+  const partials = [
+    { freq: 220, gain: 1.0 },
+    { freq: 440, gain: 0.6 },
+    { freq: 660, gain: 0.3 },
+  ];
+  for (const { freq, gain } of partials) {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    g.gain.value = gain;
+    osc.connect(g);
+    g.connect(master);
+    osc.start(t);
+    osc.stop(t + durationS);
+  }
 }
 
 function _beep(ctx, freqHz, durationS, delayS, rampS) {

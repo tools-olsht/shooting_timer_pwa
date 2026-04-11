@@ -1,4 +1,4 @@
-const CACHE = 'shot-timer-v3';
+const CACHE = 'shot-timer-v4';
 
 const ASSETS = [
   '/shooting_timer_pwa/',
