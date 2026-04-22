@@ -101,12 +101,13 @@ export function createSignalBanner() {
 }
 
 export function setSignalState(banner, type) {
-  const stateClasses = ['signal-banner--idle', 'signal-banner--attention',
+  const stateClasses = ['signal-banner--idle', 'signal-banner--prepare', 'signal-banner--attention',
     'signal-banner--shoot', 'signal-banner--rest', 'signal-banner--away', 'signal-banner--face'];
   stateClasses.forEach(cls => banner.classList.remove(cls));
 
   const classMap = {
     idle: 'signal-banner--idle',
+    prepare: 'signal-banner--prepare',
     attention: 'signal-banner--attention',
     sighting: 'signal-banner--attention',
     shoot: 'signal-banner--shoot',
@@ -124,6 +125,7 @@ export function setSignalState(banner, type) {
 
   const signalKeyMap = {
     idle: null,
+    prepare: 'signal.prepare',
     attention: 'signal.attention',
     sighting: 'signal.sighting',
     shoot: 'signal.shoot',

@@ -2,7 +2,7 @@ import { init as initI18n } from './i18n.js';
 import { unlock as unlockAudio } from './audio.js';
 import { renderHome } from './ui/home.js';
 import { renderModes } from './ui/modes.js';
-import { renderPractice } from './ui/practice.js';
+import { renderPractice, cleanupPractice } from './ui/practice.js';
 import { DISCIPLINES } from './disciplines.js';
 
 const _app = () => document.getElementById('app');
@@ -33,6 +33,9 @@ function _validateId(id, set) {
 function route() {
   const [screen, params] = _matchHash(location.hash);
   const container = _app();
+
+  // Always stop any active practice session when navigating (covers browser back, manual hash, etc.)
+  cleanupPractice();
 
   if (screen === 'home') {
     renderHome(container);

@@ -36,8 +36,12 @@ const TRANSLATIONS = {
     'mode.10s.desc': 'Third and final stage of Standard Pistol. Fire 5 shots within 10 seconds. The most demanding timing of the event. Arm must be at 45° when the start signal is given.',
     'mode.10s.rules': '5 shots per series · 10 seconds · Arm starts at 45°.\nTraining tip: First shot at ~3s, then evenly distributed. Targets shown at 3, 4.5, 6, 7.5, 9 seconds.',
 
+    'mode.240s.name': '240 Seconds',
+    'mode.240s.desc': 'New competition precision stage of 25m Pistol / Center Fire (ISSF rule change). Fire 5 shots within 240 seconds (4 minutes). The pistol may rest on a surface between shots.',
+    'mode.240s.rules': '5 shots per series · 240 seconds · Pistol may rest between shots.\nTraining tip: Targets shown at 48, 96, 144, 192, 232 seconds for ideal pacing.',
+
     'mode.300s.name': '300 Seconds',
-    'mode.300s.desc': 'Precision stage of 25m Pistol / Center Fire. Fire 5 shots within 300 seconds (5 minutes). The pistol may rest on a surface between shots. Focus on perfect technique.',
+    'mode.300s.desc': 'Legacy precision stage of 25m Pistol / Center Fire. Fire 5 shots within 300 seconds (5 minutes). The pistol may rest on a surface between shots.',
     'mode.300s.rules': '5 shots per series · 300 seconds · Pistol may rest between shots.\nTraining tip: Targets shown at 60, 120, 180, 240, 290 seconds for ideal pacing.',
 
     'mode.duel.name': 'Duel',
@@ -61,11 +65,12 @@ const TRANSLATIONS = {
 
     'mode.real_match.standard_pistol.rules': 'Sighting: 1 × 150s trial series\nBlock 1: 4 × 150s (60s loading between series) → 3 min break\nBlock 2: 4 × 20s (60s loading between series) → 3 min break\nBlock 3: 4 × 10s (60s loading between series)\nAttention: 7s · Total: 60 scored shots',
 
-    'mode.real_match.pistol_25m.rules': 'Precision — Sighting: 1 × 300s trial · 6 × 300s (60s loading between) → 3 min break\nDuel — Sighting: 1 × duel trial · 6 × duel series (60s loading between)\nAttention: 7s · Total: 60 scored shots (30 precision + 30 duel)',
+    'mode.real_match.pistol_25m.rules': 'Precision — Sighting: 1 × 240s trial · 6 × 240s (60s loading between) → 3 min break\nDuel — Sighting: 1 × duel trial · 6 × duel series (60s loading between)\nAttention: 7s · Total: 60 scored shots (30 precision + 30 duel)',
 
     'mode.real_match.rapid_fire.rules': 'Sighting: 1 × 8s trial series\nHalf 1: 2 × 8s → 2 × 6s → 2 × 4s (60s loading between series) → 5 min half break\nHalf 2: 2 × 8s → 2 × 6s → 2 × 4s (60s loading between series)\nAttention: 7s · Total: 60 scored shots',
 
     // Timer signals
+    'signal.prepare': 'PREPARE',
     'signal.attention': 'ATTENTION',
     'signal.sighting': 'SIGHTING',
     'signal.shoot': 'SHOOT',
@@ -140,8 +145,12 @@ const TRANSLATIONS = {
     'mode.10s.desc': 'Tercera y última fase de Pistola Estándar. Dispara 5 veces en 10 segundos. La más exigente. El brazo debe estar a 45° cuando se da la señal.',
     'mode.10s.rules': '5 disparos por serie · 10 segundos · Brazo a 45°.\nConsejo: Primer disparo a los ~3s. Dianas a los 3, 4.5, 6, 7.5, 9 segundos.',
 
+    'mode.240s.name': '240 Segundos',
+    'mode.240s.desc': 'Nueva fase de precisión de competición de Pistola 25m / Fuego Central (cambio de reglamento ISSF). Dispara 5 veces en 240 segundos (4 minutos). La pistola puede descansar entre disparos.',
+    'mode.240s.rules': '5 disparos por serie · 240 segundos · La pistola puede descansar.\nConsejo: Dianas a los 48, 96, 144, 192, 232 segundos.',
+
     'mode.300s.name': '300 Segundos',
-    'mode.300s.desc': 'Fase de precisión de Pistola 25m / Fuego Central. Dispara 5 veces en 300 segundos (5 minutos). La pistola puede descansar entre disparos. Céntrate en la técnica perfecta.',
+    'mode.300s.desc': 'Fase de precisión antigua de Pistola 25m / Fuego Central. Dispara 5 veces en 300 segundos (5 minutos). La pistola puede descansar entre disparos.',
     'mode.300s.rules': '5 disparos por serie · 300 segundos · La pistola puede descansar.\nConsejo: Dianas a los 60, 120, 180, 240, 290 segundos.',
 
     'mode.duel.name': 'Duelo',
@@ -165,10 +174,11 @@ const TRANSLATIONS = {
 
     'mode.real_match.standard_pistol.rules': 'Prueba: 1 × 150s serie de prueba\nBloque 1: 4 × 150s (60s carga entre series) → 3 min pausa\nBloque 2: 4 × 20s (60s carga entre series) → 3 min pausa\nBloque 3: 4 × 10s (60s carga entre series)\nAtención: 7s · Total: 60 disparos de competición',
 
-    'mode.real_match.pistol_25m.rules': 'Precisión — Prueba: 1 × 300s · 6 × 300s (60s carga entre series) → 3 min pausa\nDuelo — Prueba: 1 × duelo · 6 × series de duelo (60s carga entre series)\nAtención: 7s · Total: 60 disparos (30 precisión + 30 duelo)',
+    'mode.real_match.pistol_25m.rules': 'Precisión — Prueba: 1 × 240s · 6 × 240s (60s carga entre series) → 3 min pausa\nDuelo — Prueba: 1 × duelo · 6 × series de duelo (60s carga entre series)\nAtención: 7s · Total: 60 disparos (30 precisión + 30 duelo)',
 
     'mode.real_match.rapid_fire.rules': 'Prueba: 1 × 8s serie de prueba\nMitad 1: 2 × 8s → 2 × 6s → 2 × 4s (60s carga entre series) → 5 min pausa\nMitad 2: 2 × 8s → 2 × 6s → 2 × 4s (60s carga entre series)\nAtención: 7s · Total: 60 disparos de competición',
 
+    'signal.prepare': 'PREPARACIÓN',
     'signal.attention': 'ATENCIÓN',
     'signal.sighting': 'PRUEBA',
     'signal.shoot': 'FUEGO',

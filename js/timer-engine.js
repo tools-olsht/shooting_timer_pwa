@@ -4,8 +4,9 @@
 //   'seq-event' → {detail: {type, payload}}
 //   'done'      → sequence finished
 export class TimerEngine extends EventTarget {
-  constructor(sequence) {
+  constructor(sequence, { autoPauseOnHide = true } = {}) {
     super();
+    this._autoPauseEnabled = autoPauseOnHide;
     this._sequence = [...sequence].sort((a, b) => a.offsetMs - b.offsetMs);
     this._startWallMs = 0;
     this._pausedElapsedMs = 0;
@@ -16,6 +17,7 @@ export class TimerEngine extends EventTarget {
     this._autoPaused = false; // true only when paused by visibility change, not by user
 
     this._onVisibility = () => {
+      if (!this._autoPauseEnabled) return;
       if (document.hidden && this._state === 'running') {
         this.pause();
         this._autoPaused = true;

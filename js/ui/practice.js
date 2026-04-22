@@ -1,6 +1,7 @@
 import { DISCIPLINES, getMode, getDiscipline, buildEventSequence } from '../disciplines.js';
 import { TimerEngine } from '../timer-engine.js';
-import { playAttentionRapid, playAttentionSlow, playShootSignal, playShotSound, playRestSignal, playSeriesEndSignal } from '../audio.js';
+import { playPrepareVoice, playAttentionVoice, playShootSignal, playShotSound, playRestSignal, playSeriesEndSignal } from '../audio.js';
+import { getLang } from '../i18n.js';
 import {
   createNavBar, createSignalBanner, setSignalState, createTargetRow, activateTargetSlot,
   resetTargetRow, createDuelTarget, setDuelState, createCountdownDisplay, setCountdown,
@@ -21,6 +22,17 @@ let _isResting = false;
 let _isSighting = false;
 let _loopTimeoutId = null;
 let _loopTickInterval = null;
+
+// Play/pause consistency state
+let _userPaused = false;          // true when the user explicitly paused (not auto-paused)
+let _isInLoopDelay = false;       // true while we're in the inter-loop countdown delay
+let _loopDelayTotalMs = 0;        // total configured loop delay in ms
+let _loopDelayRemainingMs = 0;    // remaining ms when loop delay was paused
+let _loopDelayStartTime = 0;      // performance.now() snapshot when delay timer (re)started
+
+// Wake Lock state
+let _wakeLock = null;
+let _visibilityHandler = null;    // stored so we can remove it in _destroyEngine
 
 // DOM refs updated on each render (survive language change via data-i18n-key walk)
 let _signalBanner = null;
@@ -225,10 +237,35 @@ function _buildDOM(container, disciplineId, modeId) {
   container.append(main);
 }
 
+async function _acquireWakeLock() {
+  if (_wakeLock) return;
+  try {
+    if ('wakeLock' in navigator) {
+      _wakeLock = await navigator.wakeLock.request('screen');
+      _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+    }
+  } catch { /* browser denied (e.g. low battery) — degrade gracefully */ }
+}
+
+function _releaseWakeLock() {
+  if (_wakeLock) {
+    _wakeLock.release();
+    _wakeLock = null;
+  }
+}
+
 function _createEngine() {
   const sequence = buildEventSequence(_disciplineId, _modeId);
-  _engine = new TimerEngine(sequence);
+  _engine = new TimerEngine(sequence, { autoPauseOnHide: false });
   _attachEngineListeners();
+
+  // Re-acquire wake lock when page becomes visible again (browser releases it on hide)
+  _visibilityHandler = () => {
+    if (!document.hidden && _engine?.isRunning && !_userPaused) {
+      _acquireWakeLock();
+    }
+  };
+  document.addEventListener('visibilitychange', _visibilityHandler);
 }
 
 function _destroyEngine() {
@@ -241,8 +278,16 @@ function _destroyEngine() {
     _engine.destroy();
     _engine = null;
   }
+  if (_visibilityHandler) {
+    document.removeEventListener('visibilitychange', _visibilityHandler);
+    _visibilityHandler = null;
+  }
+  _releaseWakeLock();
   _countdownActive = false;
   _shouldLoop = false;
+  _isInLoopDelay = false;
+  _loopDelayRemainingMs = 0;
+  _userPaused = false;
 }
 
 function _clearLoopTick() {
@@ -271,17 +316,28 @@ function _onSeqEvent(e) {
   const { type, payload } = e.detail;
 
   switch (type) {
+    case 'prepare': {
+      _isSighting = payload.isSighting ?? false;
+      setSignalState(_signalBanner, 'prepare');
+      resetTargetRow(_targetRow);
+      if (_duelTarget) setDuelState(_duelTarget, 'away');
+      _countdownStart = _engine.elapsedMs;
+      _countdownDuration = 10000;
+      _countdownActive = true;
+      playPrepareVoice(getLang());
+      break;
+    }
     case 'attention': {
       _isSighting = payload.isSighting ?? false;
       setSignalState(_signalBanner, _isSighting ? 'sighting' : 'attention');
       resetTargetRow(_targetRow);
-      setCountdown(_countdown, null);
-      _countdownActive = false;
       if (_duelTarget) setDuelState(_duelTarget, 'away');
       // Use payload.modeId to get the right mode (needed in real_match where _modeId is 'real_match')
       const attMode = getMode(_disciplineId, payload.modeId ?? _modeId);
-      if (attMode?.signalType === 'rapid') playAttentionRapid();
-      else playAttentionSlow();
+      _countdownStart = _engine.elapsedMs;
+      _countdownDuration = (attMode?.attentionDelay ?? 3) * 1000;
+      _countdownActive = true;
+      playAttentionVoice(getLang());
       break;
     }
     case 'shoot':
@@ -426,15 +482,20 @@ function _onDone() {
     if (_duelTarget) setDuelState(_duelTarget, 'away');
     _syncPlayState(false);
     _updateLoopInputState();
+    _releaseWakeLock();
     const delayMs = Math.max(0, _loopDelaySeconds) * 1000;
+
+    // Track loop delay so play/pause can pause/resume this countdown
+    _isInLoopDelay = true;
+    _loopDelayTotalMs = delayMs;
+    _loopDelayRemainingMs = delayMs;
+    _loopDelayStartTime = performance.now();
 
     _clearLoopTick(); // ensure no stale interval
     if (delayMs > 0) {
-      // Show countdown ticking down to next loop (local captures avoid stale module-level state)
-      const loopStart = performance.now();
       setCountdown(_countdown, delayMs / 1000);
       _loopTickInterval = setInterval(() => {
-        const rem = (delayMs - (performance.now() - loopStart)) / 1000;
+        const rem = (_loopDelayRemainingMs - (performance.now() - _loopDelayStartTime)) / 1000;
         setCountdown(_countdown, Math.max(0, rem));
         if (rem <= 0) _clearLoopTick();
       }, 100);
@@ -444,15 +505,18 @@ function _onDone() {
       _loopTimeoutId = null;
       _clearLoopTick();
       setCountdown(_countdown, null);
+      _isInLoopDelay = false;
       _destroyEngine();
       _createEngine();
       _engine.start();
       _syncPlayState(true);
       _updateLoopInputState();
+      _acquireWakeLock();
     }, delayMs);
   } else {
     _syncPlayState(false);
     _updateLoopInputState();
+    _releaseWakeLock();
   }
 }
 
@@ -462,17 +526,55 @@ function _syncPlayState(playing) {
 }
 
 function _handlePlayPause() {
-  // If a loop delay timeout is pending and user clicks play, cancel it and restart immediately
-  if (_loopTimeoutId !== null) {
-    clearTimeout(_loopTimeoutId);
-    _loopTimeoutId = null;
-    _destroyEngine();
-    _createEngine();
-    _seriesIndex = 0;
-    _stageIndex = 0;
-    _engine.start();
-    _syncPlayState(true);
-    _updateLoopInputState();
+  // Handle pause/resume during the inter-loop countdown delay
+  if (_isInLoopDelay) {
+    if (_loopTimeoutId !== null) {
+      // Currently counting down — pause it
+      clearTimeout(_loopTimeoutId);
+      _loopTimeoutId = null;
+      _clearLoopTick();
+      _loopDelayRemainingMs = Math.max(0, _loopDelayRemainingMs - (performance.now() - _loopDelayStartTime));
+      _userPaused = true;
+      _syncPlayState(false);
+      _updateLoopInputState();
+    } else if (_loopDelayRemainingMs > 0) {
+      // Was paused mid-delay — resume it
+      _loopDelayStartTime = performance.now();
+      _userPaused = false;
+      _syncPlayState(true);
+      _updateLoopInputState();
+      _loopTickInterval = setInterval(() => {
+        const rem = (_loopDelayRemainingMs - (performance.now() - _loopDelayStartTime)) / 1000;
+        setCountdown(_countdown, Math.max(0, rem));
+        if (rem <= 0) _clearLoopTick();
+      }, 100);
+      _loopTimeoutId = setTimeout(() => {
+        _loopTimeoutId = null;
+        _clearLoopTick();
+        setCountdown(_countdown, null);
+        _isInLoopDelay = false;
+        _destroyEngine();
+        _createEngine();
+        _engine.start();
+        _syncPlayState(true);
+        _updateLoopInputState();
+        _acquireWakeLock();
+      }, _loopDelayRemainingMs);
+    } else {
+      // Remaining is 0 but timeout hasn't fired yet — start immediately
+      if (_loopTimeoutId !== null) { clearTimeout(_loopTimeoutId); _loopTimeoutId = null; }
+      _clearLoopTick();
+      setCountdown(_countdown, null);
+      _isInLoopDelay = false;
+      _destroyEngine();
+      _createEngine();
+      _seriesIndex = 0;
+      _stageIndex = 0;
+      _engine.start();
+      _syncPlayState(true);
+      _updateLoopInputState();
+      _acquireWakeLock();
+    }
     return;
   }
 
@@ -483,24 +585,32 @@ function _handlePlayPause() {
     _handleReset();
     _engine.start();
     _syncPlayState(true);
+    _userPaused = false;
+    _acquireWakeLock();
     return;
   }
 
   if (_engine.isRunning) {
     _engine.pause();
+    _userPaused = true;
     _syncPlayState(false);
     _updateLoopInputState();
+    _releaseWakeLock();
   } else if (_engine.isPaused) {
     _engine.resume();
+    _userPaused = false;
     _syncPlayState(true);
     _updateLoopInputState();
+    _acquireWakeLock();
   } else {
     // idle — start fresh
     _seriesIndex = 0;
     _stageIndex = 0;
     _engine.start();
+    _userPaused = false;
     _syncPlayState(true);
     _updateLoopInputState();
+    _acquireWakeLock();
   }
 }
 
@@ -513,6 +623,7 @@ function _handleReset() {
   _shouldLoop = false;
   _isResting = false;
   _isSighting = false;
+  _userPaused = false;
   setSignalState(_signalBanner, 'idle');
   resetTargetRow(_targetRow);
   setCountdown(_countdown, null);
@@ -577,4 +688,11 @@ function _updateLoopInputState() {
   if (!_loopDelayInput) return;
   const isRunning = _engine?.isRunning ?? false;
   _loopDelayInput.disabled = isRunning || _isResting;
+}
+
+// Called by the router when navigating away from the practice screen by any means.
+// Stops all timers, sounds, and engine activity so nothing bleeds into other screens.
+export function cleanupPractice() {
+  _destroyEngine();
+  _currentKey = '';
 }

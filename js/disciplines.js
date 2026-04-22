@@ -55,6 +55,17 @@ export const DISCIPLINES = {
   pistol_25m: {
     id: 'pistol_25m',
     modes: {
+      '240s': {
+        id: '240s',
+        durationSeconds: 240,
+        shots: 5,
+        seriesPerMatch: 6,
+        signalType: 'slow',
+        attentionDelay: 5,
+        shotTargetSeconds: [48, 96, 144, 192, 232],
+        hasLoop: false,
+        hasDuel: false,
+      },
       '300s': {
         id: '300s',
         durationSeconds: 300,
@@ -83,7 +94,7 @@ export const DISCIPLINES = {
         competitionAttentionDelay: 7,
         // Each stage has its own sighting series
         stages: [
-          { modeId: '300s', count: 6, hasSighting: true },
+          { modeId: '240s', count: 6, hasSighting: true },
           { modeId: 'duel', count: 6, hasSighting: true },
         ],
         restBetweenSeries: 60,   // loading time between series
@@ -150,10 +161,11 @@ export function getDiscipline(id) { return DISCIPLINES[id] ?? null; }
 export function getMode(disciplineId, modeId) { return DISCIPLINES[disciplineId]?.modes[modeId] ?? null; }
 
 // Builds a flat array of {offsetMs, type, payload} events for TimerEngine.
-// type values: 'attention' | 'shoot' | 'start' | 'shot_target' | 'series_end' |
+// type values: 'prepare' | 'attention' | 'shoot' | 'start' | 'shot_target' | 'series_end' |
 //              'rest_start' | 'rest_end' | 'away' | 'face' |
 //              'stage_break_start' | 'stage_break_end' |
 //              'half_break_start' | 'half_break_end' | 'match_end'
+const PREPARE_DURATION_MS = 10000; // 10s preparation phase before each attention signal
 export function buildEventSequence(disciplineId, modeId) {
   const discipline = getDiscipline(disciplineId);
   const mode = getMode(disciplineId, modeId);
@@ -171,7 +183,9 @@ function _buildSingleModeSequence(discipline, mode, startOffsetMs, opts = {}) {
   let t = startOffsetMs;
 
   if (mode.hasDuel) {
-    // Duel: attention → (7s away + 3s face) × 5 → series_end
+    // Duel: prepare → attention → (7s away + 3s face) × 5 → series_end
+    events.push({ offsetMs: t, type: 'prepare', payload: { modeId: mode.id, isSighting } });
+    t += PREPARE_DURATION_MS;
     events.push({ offsetMs: t, type: 'attention', payload: { modeId: mode.id, isSighting } });
     t += attentionDelay * 1000;
     for (let i = 0; i < mode.shots; i++) {
@@ -184,8 +198,10 @@ function _buildSingleModeSequence(discipline, mode, startOffsetMs, opts = {}) {
     }
     events.push({ offsetMs: t, type: 'series_end', payload: { isSighting } });
   } else {
-    // Standard timed mode: attention → start/shoot → shot_targets × N → series_end
+    // Standard timed mode: prepare → attention → start/shoot → shot_targets × N → series_end
     const signalKey = mode.signalType === 'slow' ? 'start' : 'shoot';
+    events.push({ offsetMs: t, type: 'prepare', payload: { modeId: mode.id, isSighting } });
+    t += PREPARE_DURATION_MS;
     events.push({ offsetMs: t, type: 'attention', payload: { modeId: mode.id, isSighting } });
     t += attentionDelay * 1000;
     events.push({ offsetMs: t, type: signalKey, payload: { modeId: mode.id } });

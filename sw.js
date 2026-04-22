@@ -1,4 +1,4 @@
-const CACHE = 'shot-timer-v6';
+const CACHE = 'shot-timer-v7';
 
 const ASSETS = [
   '/shooting_timer_pwa/',
@@ -21,6 +21,10 @@ const ASSETS = [
   '/shooting_timer_pwa/icons/icon-192.png',
   '/shooting_timer_pwa/icons/icon-512.png',
   '/shooting_timer_pwa/audio/horn.mp3',
+  '/shooting_timer_pwa/audio/prepare_en.mp3',
+  '/shooting_timer_pwa/audio/prepare_es.mp3',
+  '/shooting_timer_pwa/audio/attention_en.mp3',
+  '/shooting_timer_pwa/audio/attention_es.mp3',
 ];
 
 self.addEventListener('install', e => {

@@ -153,6 +153,7 @@
 }
 
 .signal-banner--idle       { background: var(--color-idle-bg);       color: var(--color-idle-text); }
+.signal-banner--prepare    { background: var(--color-prepare-bg);     color: var(--color-prepare-text); }
 .signal-banner--attention  { background: var(--color-attention-bg);   color: var(--color-attention-text); }
 .signal-banner--shoot      { background: var(--color-shoot-bg);       color: var(--color-shoot-text); }
 .signal-banner--rest       { background: var(--color-rest-bg);        color: var(--color-rest-text); }

@@ -2,10 +2,22 @@ let _ctx = null;
 let _hornBuffer = null;   // decoded AudioBuffer, loaded once
 let _hornLoading = false; // guard against concurrent fetches
 
+// Buffers for localized voice audio files
+const _prepareBuffers = {};   // { en: AudioBuffer, es: AudioBuffer }
+const _attentionBuffers = {}; // { en: AudioBuffer, es: AudioBuffer }
+
 function _getCtx() {
   if (!_ctx) _ctx = new AudioContext();
   if (_ctx.state === 'suspended') _ctx.resume();
   return _ctx;
+}
+
+// Generic helper: fetch, decode, and return an AudioBuffer from a path.
+async function _loadBuffer(path) {
+  const ctx = _getCtx();
+  const res = await fetch(path);
+  const arrayBuf = await res.arrayBuffer();
+  return ctx.decodeAudioData(arrayBuf);
 }
 
 // Preload horn.mp3 into an AudioBuffer so playback is instant and interference-free
@@ -14,19 +26,70 @@ async function _loadHorn() {
   if (_hornLoading) return;
   _hornLoading = true;
   try {
-    const ctx = _getCtx();
-    const res = await fetch('./audio/horn.mp3');
-    const arrayBuf = await res.arrayBuffer();
-    _hornBuffer = await ctx.decodeAudioData(arrayBuf);
+    _hornBuffer = await _loadBuffer('./audio/horn.mp3');
   } catch {
     _hornLoading = false; // allow a retry on next play attempt
   }
 }
 
+// Preload all four localized voice files. Best-effort — silently ignores failures.
+async function _loadVoiceFiles() {
+  const langs = ['en', 'es'];
+  await Promise.all(langs.map(async lang => {
+    try {
+      if (!_prepareBuffers[lang]) {
+        _prepareBuffers[lang] = await _loadBuffer(`./audio/prepare_${lang}.mp3`);
+      }
+    } catch { /* ignore — fallback to synth beep */ }
+    try {
+      if (!_attentionBuffers[lang]) {
+        _attentionBuffers[lang] = await _loadBuffer(`./audio/attention_${lang}.mp3`);
+      }
+    } catch { /* ignore — fallback to synth beep */ }
+  }));
+}
+
+// Play a preloaded AudioBuffer through a fresh BufferSourceNode at full gain.
+function _playBuffer(buffer) {
+  if (!buffer) return false;
+  const ctx = _getCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.value = 1.0;
+  src.connect(gain);
+  gain.connect(ctx.destination);
+  src.start(ctx.currentTime);
+  return true;
+}
+
 // Must be called on first user gesture to unlock AudioContext on iOS Safari
 export function unlock() {
   _getCtx();
-  _loadHorn(); // kick off preload; we have a user gesture so fetch is allowed
+  _loadHorn();         // kick off horn preload
+  _loadVoiceFiles();   // kick off voice file preloads
+}
+
+// Play localized "prepare" voice announcement. Falls back to synth beep if buffer not ready.
+export function playPrepareVoice(lang) {
+  const buf = _prepareBuffers[lang] || _prepareBuffers['en'];
+  if (!_playBuffer(buf)) {
+    // Buffer not ready — fallback synth
+    const ctx = _getCtx();
+    _beep(ctx, 660, 0.2, 0, 0.02);
+    _beep(ctx, 660, 0.2, 0.3, 0.02);
+  }
+}
+
+// Play localized "attention" voice announcement. Falls back to synth beep if buffer not ready.
+export function playAttentionVoice(lang) {
+  const buf = _attentionBuffers[lang] || _attentionBuffers['en'];
+  if (!_playBuffer(buf)) {
+    // Buffer not ready — fallback synth (same as existing rapid/slow beeps)
+    const ctx = _getCtx();
+    _beep(ctx, 880, 0.08, 0, 0.01);
+    _beep(ctx, 880, 0.08, 0.15, 0.01);
+  }
 }
 
 // Two short high beeps — attention signal for rapid modes (ISSF-style double alert)
